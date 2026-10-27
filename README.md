@@ -190,6 +190,6 @@ Additional resources and commands will be added progressively as each topic is e
 
 ---
 
-**Project focus:** Git -> DevOps -> DevSecOps -> Cloud.
+**Project focus:** Git -> CI/CD -> DevSecOps -> Cloud.
 
 **Approach:** Learn by implementing, testing, reviewing, documenting, and improving one step at a time.
