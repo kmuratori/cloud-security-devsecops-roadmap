@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Git Demo · Task Board</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <p class="eyebrow">GIT DEMO PROJECT</p>
+      <h1>Task Board<span>.</span></h1>
+      <p class="subtitle">A tiny task tracker built with Python, SQLite, and JavaScript.</p>
+    </header>
+
+    <form id="task-form">
+      <label class="sr-only" for="task-title">New task</label>
+      <input id="task-title" name="title" maxlength="160" placeholder="What needs to get done?" autocomplete="off" required>
+      <button type="submit">Add task <span aria-hidden="true">＋</span></button>
+    </form>
+    <p id="notice" class="notice" role="status" aria-live="polite"></p>
+
+    <section class="board" aria-labelledby="tasks-heading">
+      <div class="board-head">
+        <h2 id="tasks-heading">Your tasks</h2>
+        <span id="task-count" class="count">0 tasks</span>
+      </div>
+      <ul id="task-list" class="task-list"></ul>
+      <div id="empty-state" class="empty">
+        <span class="empty-icon">✓</span>
+        <strong>Nothing on the board yet</strong>
+        <p>Add a task above to get started.</p>
+      </div>
+    </section>
+    <footer><span>Flask + SQLite</span><span>Made for practicing Git</span></footer>
+  </main>
+</body>
+</html>
