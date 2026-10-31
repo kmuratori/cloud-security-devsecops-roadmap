@@ -113,6 +113,74 @@ curl http://localhost:8080
 > machines du réseau peuvent l'atteindre. Pour limiter l'accès
 > à la VM seule, écris `-p 127.0.0.1:8080:80`.
 
+### Docker Compose
+
+- **Compose** : décrit dans un seul fichier (`compose.yaml`) les
+  conteneurs, ports, volumes et réseaux, et les lance avec une
+  seule commande.
+- Réseau créé automatiquement : `<projet>_default`. C'est un
+  réseau personnalisé, donc le DNS Docker marche.
+- `down` supprime les conteneurs et le réseau. Il garde les
+  volumes nommés ; `down -v` les supprime aussi. Un bind mount
+  n'est jamais supprimé (ce sont les fichiers de hote).
+- `./site:/usr/share/nginx/html:ro` : bind mount en lecture
+  seule (`ro`), le conteneur lit le dossier mais ne peut pas
+  le modifier.
+
+```yaml
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - 8080:80
+    volumes:
+      - ./site:/usr/share/nginx/html:ro
+
+  client:
+    image: alpine:latest
+    command: sleep 3600
+    volumes:
+      - data0:/data
+
+volumes:
+  data0:
+```
+
+```sh
+docker compose up -d
+docker compose ps
+docker compose exec client ping -c 2 web
+docker compose down
+docker compose down -v
+```
+
+Commandes : [compose-demo](../labs/compose-demo)
+
+#### Avantages de Compose
+
+- Une commande: `docker compose up`
+- Tout est écrit dans un fichier: `compose.yaml`
+- Reproductible
+- Réseau automatique
+- Nettoyage simple: `docker compose down [-v]`
+
+#### Cas d'usage
+
+- Application et base de données
+- Environnement de développement
+- Tests
+- Labos
+
+#### Limites
+
+- Compose gère des conteneurs sur **une seule machine**.
+  Pour plusieurs machines et de la haute disponibilité, on
+  utilise Kubernetes.
+
+- Les secrets (mots de passe, clés) ne doivent pas être
+  écrits en clair dans `compose.yaml` : on utilise un
+  fichier `.env`.
+
 ## Problèmes rencontrés
 
 ### `pip install` échoue pendant le build

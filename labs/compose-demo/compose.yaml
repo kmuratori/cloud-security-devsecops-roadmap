@@ -1,0 +1,16 @@
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - 8080:80
+    volumes:
+      - ./site:/usr/share/nginx/html:ro
+
+  client:
+    image: alpine:latest
+    command: sleep 3600
+    volumes:
+      - data0:/data
+
+volumes:
+  data0:
