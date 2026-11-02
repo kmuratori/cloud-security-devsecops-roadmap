@@ -181,6 +181,78 @@ Commandes : [compose-demo](../labs/compose-demo)
   écrits en clair dans `compose.yaml` : on utilise un
   fichier `.env`.
 
+### Sécurité
+
+#### Utilisateur non-root
+
+- **Par défaut**, un conteneur tourne en **root**. Si quelqu'un
+  y entre, ou si un dossier de ma machine est monté en bind
+  mount, root peut lire, modifier et supprimer tous les
+  fichiers de ce dossier.
+
+- **Solution :** créer un utilisateur sans mot de passe et
+  passer à cet utilisateur juste avant `CMD`.
+
+- `pip install` s'exécute avant `USER` (en root).
+
+```dockerfile
+RUN  useradd -r user0
+RUN  chown user0:user0 /app
+COPY --chown=user0 main.py ./
+USER user0
+CMD  [ "python", "main.py" ]
+```
+
+Vérifier : `docker run --rm <image> id` (uid différent de 0)
+et `touch /etc/test` (permission denied).
+
+#### Secrets
+
+- Un secret écrit avec `ENV` reste dans l'image : visible
+  avec `docker history`, `docker inspect` et `docker run
+  <image> env`.
+
+- Avec `-e` ou `--env-file`, la clé n'est plus dans l'image,
+  mais elle reste visible **quand le conteneur tourne**
+  (`docker inspect`, `docker exec ... env`).
+
+- `.dockerignore` empêche `.env` d'être copié dans l'image
+  par `COPY . ...`.
+
+- Un vrai secret se met dans un fichier monté en lecture
+  seule ou dans un gestionnaire de secrets (AWS Secrets
+  Manager).
+
+### Images légères et multi-stage
+
+- Une étape `builder` installe et compile ; l'image finale
+  ne copie que le résultat (`COPY --from=builder`).
+
+- Gain de taille grand quand `builder` est lourd
+  (compilateurs, SDK). Petit quand il y a peu de paquets.
+
+- `--prefix=/build` : `pip` installe dans un dossier
+  organisé comme `/usr/local`, qu'on copie vers
+  `/usr/local/` dans l'image finale.
+
+- Moins de logiciels dans l'image : moins de failles
+  possibles.
+
+```dockerfile
+FROM    python:3.12-slim AS builder
+WORKDIR /app
+COPY    requirements.txt ./
+RUN     pip install --prefix=/build -r requirements.txt
+
+FROM    python:3.12-slim
+WORKDIR /app
+RUN     useradd -r user0
+COPY    --from=builder /build /usr/local/
+COPY    --chown=user0 main.py ./
+USER    user0
+CMD     [ "python", "main.py" ]
+```
+
 ## Problèmes rencontrés
 
 ### `pip install` échoue pendant le build
@@ -211,3 +283,10 @@ Règle : `docker run -v [VOLUME]:[POINT DE MONTAGE] [IMAGE]`
 
 - Pour ouvrir un shell sans risque : `docker exec -it <nom> sh`.
 - Pour quitter un `attach` sans arrêter le conteneur : Ctrl+P puis Ctrl+Q.
+
+### `CMD` avec `$VARIABLE`
+
+`CMD [ "echo", "$API_KEY" ]` n'affiche pas la valeur : la
+forme avec crochets n'utilise pas de shell. Il faut `CMD
+echo $API_KEY` ou `CMD [ "sh", "-c", "echo $API_KEY" ]`.
+

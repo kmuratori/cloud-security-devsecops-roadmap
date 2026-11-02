@@ -1,0 +1,14 @@
+FROM    python:3.12-slim AS builder
+WORKDIR /app
+COPY    ./requirements.txt ./
+RUN     pip install --prefix=/build -r ./requirements.txt
+
+FROM    python:3.12-slim
+WORKDIR /app
+RUN     useradd -r user0
+RUN     chown user0:user0 /app
+COPY    --from=builder /build /usr/local/
+COPY    --chown=user0 main.py ./
+USER    user0
+# CMD     [ "python", "-m", "site" ]
+CMD     [ "python", "main.py" ]
