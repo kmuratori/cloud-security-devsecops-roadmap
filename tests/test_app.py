@@ -20,7 +20,7 @@ def test_create_and_list_tasks(tmp_path, monkeypatch):
   # List tasks
   response = client.get("/api/tasks")
 
-  assert response.status_code == 201
+  assert response.status_code == 200
 
   tasks = response.get_json()
   assert any(task["title"] == "Learn pytest" for task in tasks)
