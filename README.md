@@ -1,195 +1,107 @@
-# Git / DevOps Lab - Task Board
+# Task Board: Git / DevOps Lab
 
-A small web application used as a practice target for **Git, DevOps, DevSecOps, and Cloud engineering**.
+A small Flask + SQLite web app used as a practice target for **Git, CI/CD, DevSecOps and Cloud engineering**.
 
-The application is intentionally simple. The main goal of this repository is to practice the workflows surrounding software development: version control, collaboration, automation, security testing, packaging, and deployment.
+The app is intentionally simple. The goal of this repository is the workflow around it: version control, automation, security checks, packaging and deployment.
 
-## Goals
+## Status
 
-- Practice Git fundamentals using a real, multi-file project.
-- Learn branching strategies, commits, merges, conflict resolution, and tags.
-- Use GitHub issues, pull requests, code reviews, and branch protection.
-- Introduce continuous integration and automated testing.
-- Explore DevSecOps practices by integrating security checks into development workflows.
-- Learn the fundamentals of software packaging, containers, and cloud deployment.
-- Document experiments, technical decisions, errors, and lessons learned.
-- Build a practical portfolio demonstrating continuous learning in DevOps, DevSecOps, and Cloud.
+| Area | Status |
+|---|---|
+| Git fundamentals (branches, conflicts, `revert`) | Done |
+| Docker (multi-stage, non-root, volume, Trivy scan run manually) | Done |
+| CI with GitHub Actions (tests, image build, smoke test) | Done |
+| Security scanners in CI (dependencies, secrets, SAST) | Planned |
+| Cloud deployment | Planned |
 
 ## Tools
 
 | Tool | Purpose |
 |---|---|
-| Git | Version control, branching, merging, and history |
-| GitHub | Remote repository, issues, pull requests, reviews, and Wiki |
-| Python + Flask | Backend application and REST API |
-| SQLite | Lightweight local database |
-| HTML, CSS, JavaScript | Frontend |
-| Python `venv` + `pip` | Environment isolation and dependency management |
-| GitHub Actions | Continuous integration and automation - planned |
-| Security scanners | Dependency analysis, secret detection, and static analysis - planned |
-| Docker | Containerization - planned |
-| Cloud platform | Deployment and infrastructure experiments - planned |
+| Git / GitHub | Version control, pull requests |
+| Python 3.12 + Flask | Backend and REST API |
+| SQLite | Local database |
+| pytest | Automated tests |
+| Docker | Containerization |
+| GitHub Actions | Continuous integration |
+| Trivy | Image vulnerability scan (manual for now) |
 
-Tools will be introduced progressively according to the learning objectives of each stage.
+## Getting started
 
-## Getting Started
+### Run with Docker
 
-### Prerequisites
+```bash
+docker build -t taskboard .
+docker run -d             \
+  --name taskboard        \
+  -v taskboard-data:/data \
+  -p 5000:5000            \
+  taskboard
+```
 
-- Git
-- Python 3.10 or newer
-- A GitHub account for remote repository and collaboration exercises
+Open `http://localhost:5000`.
 
-### Run the application
+The app stores its database in `/data` (hardcoded path), so the container needs a volume there. The image runs as a non-root user.
+
+### Run the tests
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python app.py
+pytest
 ```
 
-Open `http://127.0.0.1:5000` in your browser.
+Tests use a temporary database and never touch `/data`.
 
-The application uses SQLite for local persistence. Its database file is generated locally and excluded from version control.
+## Continuous integration
 
-## Lab Roadmap
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `master`:
 
-### 1. Git Fundamentals
+1. `tests`: installs dependencies and runs `pytest`.
+2. `docker-build` (only if `tests` passes): builds the image, then runs `scripts/smoke_test.sh`.
 
-**Objective:** Understand how Git tracks changes and how developers collaborate.
-
-- Initialize and configure a repository.
-- Stage and commit changes.
-- Inspect history with `git log`.
-- Compare changes using `git diff` and `git show`.
-- Create, switch, merge, and delete branches.
-- Resolve merge conflicts.
-- Undo changes safely with `git revert`.
-- Create tags and understand releases.
-- Practice working with a remote repository.
-
-### 2. GitHub Collaboration
-
-**Objective:** Adopt a structured development workflow.
-
-- Create issues with clear goals and acceptance criteria.
-- Use feature branches for individual changes.
-- Open pull requests.
-- Review code before merging.
-- Protect the main branch.
-- Require reviews and successful automated checks.
-- Use descriptive commit messages and maintain a readable history.
-
-### 3. Continuous Integration
-
-**Objective:** Automate checks whenever code changes.
-
-- Create a GitHub Actions workflow.
-- Run automated tests on pull requests.
-- Check syntax, formatting, and code quality.
-- Understand workflow triggers, jobs, steps, and artifacts.
-- Investigate failed runs and fix the underlying problems.
-- Prevent changes from being merged when required checks fail.
-
-### 4. DevSecOps
-
-**Objective:** Integrate security into the software development lifecycle.
-
-- Scan dependencies for known vulnerabilities.
-- Detect accidentally committed secrets.
-- Introduce static application security testing (SAST).
-- Review and remediate security findings.
-- Scan container images for vulnerabilities.
-- Understand software supply-chain security.
-- Integrate appropriate security checks into CI pipelines.
-
-### 5. Containers and Cloud
-
-**Objective:** Progress from a local application to a repeatable deployment workflow.
-
-- Containerize the application with Docker.
-- Manage configuration through environment variables.
-- Understand image building, tagging, and registry workflows.
-- Introduce cloud deployment in a test environment.
-- Explore deployment automation and environment separation.
-- Document logs, health checks, rollback procedures, and resource cleanup.
-
-These stages form a roadmap; they are not claims that the corresponding infrastructure or automation is already implemented.
-
-## Suggested Git Workflow
-
-Use this cycle for each exercise:
-
-1. Define the objective and acceptance criteria.
-2. Create an issue.
-3. Create a branch from `main`.
-4. Implement one focused change.
-5. Run relevant checks locally.
-6. Review the diff.
-7. Commit with a descriptive message.
-8. Push the branch and open a pull request.
-9. Review the changes and automated checks.
-10. Merge and update the local repository.
-
-Example:
+The smoke test starts the container, waits for the API (5 attempts), checks `GET /api/tasks`, and always removes the container.
 
 ```bash
-git switch main
-git pull --ff-only
-git switch -c chore/add-basic-tests
-
-# Implement the change
-git status
-git diff
-git add .
-git commit -m "test: add basic API tests"
-git push -u origin chore/add-basic-tests
+./scripts/smoke_test.sh <image>
 ```
 
-Complete the workflow by opening a pull request on GitHub.
+The Dockerfile starts with a `# syntax=` line so the `COPY --exclude` flag works on older Docker versions.
 
-## Suggested Exercises
+## Repository layout
 
-- Create a feature branch and merge it into `main`.
-- Produce and resolve a merge conflict.
-- Compare `git merge` and `git rebase`.
-- Undo a commit using `git revert`.
-- Create a version tag.
-- Configure branch protection and required checks.
-- Add a CI workflow and investigate a failing run.
-- Introduce a dependency scanner and document its findings.
-- Add secret detection and learn how to respond to an exposed credential.
-- Containerize the application and scan the resulting image.
-- Build a deployment workflow for a test environment.
+| Path | Content |
+|---|---|
+| `app.py`, `templates/` | The application |
+| `tests/` | pytest tests |
+| `Dockerfile` | Multi-stage image |
+| `scripts/` | Automation scripts |
+| `.github/workflows/` | CI workflows |
+| `labs/` | Docker practice demos |
+| `notes/` | Personal learning notes |
 
-Use a disposable branch or test repository when practicing destructive Git operations.
+## Roadmap
 
-## Repository Scope
+1. **Git fundamentals**: commits, branches, merges, conflicts, `revert`, tags.
+2. **GitHub collaboration**: issues, pull requests, reviews, branch protection.
+3. **Continuous integration**: tests and checks on every change.
+4. **DevSecOps**: dependency, secret and static analysis scans; image scanning in CI; supply-chain basics.
+5. **Containers and cloud**: image registry, test deployment, health checks, rollback, cleanup.
 
-The initial project provides a minimal Flask and SQLite application as a target for development and automation exercises.
+Items marked "Planned" above are goals, not features of the repository yet.
 
-The starter repository does not yet include a configured CI/CD pipeline, security scanners, container image, or cloud deployment. These components will be introduced incrementally as part of the lab.
+## Git workflow
 
-The application is the practice target; the primary learning objective is the engineering workflow around it.
+1. Create a branch from `master`.
+2. Make one focused change and run the checks locally.
+3. Commit with a descriptive message (`feat:`, `docs:`, `ci:`, `test:`).
+4. Push and open a pull request.
+5. Wait for the checks to pass, then merge.
 
-## Documentation and Resources
-
-This README provides the project overview, goals, and learning roadmap.
-
-The GitHub Wiki will contain more detailed documentation as the project grows, including:
-
-- Useful Git commands and recovery procedures.
-- Setup instructions and troubleshooting.
-- GitHub Actions and CI/CD workflow explanations.
-- DevSecOps tools, configurations, and findings.
-- Docker and cloud deployment notes.
-- References, tutorials, and personal learning notes.
-
-Additional resources and commands will be added progressively as each topic is explored.
+Undo pushed changes with `git revert`, not `reset` + force push.
 
 ---
 
-**Project focus:** Git -> CI/CD -> DevSecOps -> Cloud.
-
-**Approach:** Learn by implementing, testing, reviewing, documenting, and improving one step at a time.
+**Focus:** Git -> CI/CD -> DevSecOps -> Cloud.
+**Approach:** learn by implementing, testing, documenting and improving one step at a time.
