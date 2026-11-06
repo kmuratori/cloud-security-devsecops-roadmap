@@ -3,7 +3,7 @@ import sqlite3
 from pathlib import Path
 
 app = Flask(__name__)
-DB_PATH = Path(__file__).with_name("tasks.db")
+DB_PATH = Path("/data/tasks.db")
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -73,4 +73,4 @@ def delete_task(task_id):
 
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
